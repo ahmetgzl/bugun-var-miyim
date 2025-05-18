@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oyun Durumum</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --secondary: #ff5722;
+            --dark: #121212;
+            --light: #f0f0f0;
+            --success: #4caf50;
+            --danger: #f44336;
+            --warning: #ff9800;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 87, 34, 0.2) 0%, transparent 40%);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+        }
+        
+        .status-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .available {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .unavailable {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .maybe {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .time-slots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .time-slot {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .weekly-schedule {
+            display: grid;
+            grid-template-columns: auto repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        
+        .time-row {
+            display: contents;
+        }
+        
+        .time-label {
+            padding: 0.5rem;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .schedule-cell {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        
+        .yes {
+            background-color: rgba(76, 175, 80, 0.3);
+        }
+        
+        .no {
+            background-color: rgba(244, 67, 54, 0.3);
+        }
+        
+        .maybe {
+            background-color: rgba(255, 152, 0, 0.3);
+        }
+        
+        .today {
+            position: relative;
+        }
+        
+        .today::after {
+            content: "Bugün";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 0.6rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 768px) {
+            .weekly-schedule {
+                font-size: 0.8rem;
+            }
+            
+            .day-header, .schedule-cell {
+                padding: 0.4rem 0.2rem;
+            }
+            
+            .time-label {
+                padding: 0.4rem 0.2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .weekly-schedule {
+                font-size: 0.7rem;
+            }
+            
+            .day-header {
+                writing-mode: vertical-rl;
+                text-orientation: mixed;
+                height: 80px;
+                padding: 0.3rem;
+            }
+            
+            .schedule-cell {
+                padding: 0.3rem 0.1rem;
+            }
+        }
+        
+        .info-text {
+            margin-top: 0.5rem;
+            font-style: italic;
+            opacity: 0.8;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .note {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            border-left: 3px solid var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-gamepad"></i> Oyun Durumum</h1>
+        </header>
+        
+        <!-- BUGÜN BÖLÜMÜ - BU BÖLÜMÜ DÜZENLE -->
+        <div class="status-card">
+            <h2>Bugün Oyunda Var mıyım?</h2>
+            
+            <!-- BUGÜNKÜ DURUMUNU BURADAN DÜZENLE: "available" (müsaitim), "unavailable" (müsait değilim), "maybe" (belki) -->
+            <div class="status-indicator maybe">Belki</div>
+            
+            <p>18 Mayıs 2025, Pazar</p>
+            
+            <!-- MÜSAIT OLDUĞUN SAATLER - BU BÖLÜMÜ DÜZENLE -->
+            <div class="time-slots">
+                <div class="time-slot">20:00 - 22:00</div>
+                <div class="time-slot">22:00 - 00:00</div>
+            </div>
+            
+            <!-- NOT EKLEMEK İSTERSEN BURAYA EKLE (İSTEĞE BAĞLI) -->
+            <div class="note">
+                Duruma göre 20 değilde 22 ve 00 arası falan olabilir.
+            </div>
+        </div>
+        
+        <!-- BU HAFTA BÖLÜMÜ - BU BÖLÜMÜ DÜZENLE -->
+        <div class="status-card">
+            <h2>Haftaya Oyun Durumum</h2>
+            
+            <div class="weekly-schedule">
+                <!-- GÜN BAŞLIKLARI - TARİHLERİ DÜZENLE -->
+                <div class="day-header"></div>
+                <div class="day-header">Ptesi<br>19</div>
+                <div class="day-header">Salı<br>20</div>
+                <div class="day-header">Çrş<br>21</div>
+                <div class="day-header">Prş<br>22</div>
+                <div class="day-header">Cuma<br>23</div>
+                <div class="day-header">Ctesi<br>24</div>
+                <div class="day-header">Pazar<br>25</div>
+                
+                <!-- SAAT: 20:00 - 22:00 -->
+                <div class="time-row">
+                    <div class="time-label">18-20</div>
+                    <!-- HER GÜN İÇİN DURUM: "yes" (varım), "no" (yokum), "maybe" (belki) -->
+                    <div class="schedule-cell no">X</div>
+                    <div class="schedule-cell yes">✓</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                </div>
+                
+                <!-- SAAT: 22:00 - 00:00 -->
+                <div class="time-row">
+                    <div class="time-label">20-24</div>
+                    <!-- HER GÜN İÇİN DURUM: "yes" (varım), "no" (yokum), "maybe" (belki) -->
+                    <div class="schedule-cell no">X</div>
+                    <div class="schedule-cell yes">✓</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                    <div class="schedule-cell maybe">?</div>
+                </div>
+            </div>
+            
+            <p class="info-text">Son güncelleme: 18 Mayıs 2025, 17:30</p>
+        </div>
+        
+        <footer>
+            <p><span class="user-name">bigfiggings</span> tarafından hazırlandı.</p>
+        </footer>
+    </div>
+</body>
+</html>
