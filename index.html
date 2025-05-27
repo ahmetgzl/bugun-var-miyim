@@ -503,6 +503,72 @@
         margin-top: 0.3rem;
       }
 
+      .update-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.6rem 0.8rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        margin: 0.8rem 0;
+        border-left: 3px solid var(--primary);
+      }
+
+      .last-updated {
+        display: flex;
+        align-items: center;
+        font-size: 0.85rem;
+        color: var(--primary);
+        font-weight: bold;
+      }
+
+      .last-updated i {
+        margin-right: 0.5rem;
+        color: var(--secondary);
+      }
+
+      .data-fetched {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .data-fetched i {
+        margin-right: 0.5rem;
+        color: var(--secondary);
+      }
+
+      .freshness-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        margin-left: 0.5rem;
+      }
+
+      .fresh {
+        background-color: rgba(76, 175, 80, 0.2);
+        color: var(--success);
+        border: 1px solid rgba(76, 175, 80, 0.3);
+      }
+
+      .old {
+        background-color: rgba(255, 152, 0, 0.2);
+        color: var(--warning);
+        border: 1px solid rgba(255, 152, 0, 0.3);
+      }
+
+      .very-old {
+        background-color: rgba(244, 67, 54, 0.2);
+        color: var(--danger);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+      }
+
       @media (max-width: 768px) {
         .container {
           padding: 0.5rem;
@@ -554,6 +620,16 @@
 
         .time-slots {
           justify-content: center;
+        }
+
+        .update-info {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.3rem;
+        }
+
+        .last-updated, .data-fetched {
+          font-size: 0.8rem;
         }
 
         .compact-view {
@@ -740,16 +816,23 @@
         </div>
       </div>
 
+      <div class="update-info">
+        <div class="last-updated">
+          <i class="fas fa-user-edit"></i>
+          <span id="lastUpdatedByUser">bigfiggings tarafından güncellendi: Yükleniyor...</span>
+          <span id="freshnessIndicator" class="freshness-indicator fresh">GÜNCEL</span>
+        </div>
+        <div class="data-fetched">
+          <i class="fas fa-download"></i>
+          <span id="lastDataFetch">Veriler çekildi: Yükleniyor...</span>
+        </div>
+      </div>
+
       <div id="errorContainer" style="display: none;"></div>
 
       <button class="update-btn" id="updateBtn">
         <i class="fas fa-sync-alt"></i>Verileri Güncelle
       </button>
-      
-      <div class="info-text">
-        <i class="fas fa-info-circle"></i>
-        <span id="lastUpdateInfo">Son güncelleme: Yükleniyor...</span>
-      </div>
 
       <footer>
         <p>
@@ -777,6 +860,18 @@
         return new Intl.DateTimeFormat("tr-TR", options).format(date);
       }
 
+      function formatTurkishDateTime(date) {
+        const options = {
+          timeZone: "Europe/Istanbul",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        };
+        return new Intl.DateTimeFormat("tr-TR", options).format(date);
+      }
+
       function getShortWeekday(date) {
         const weekdays = ["Pzr", "Pts", "Salı", "Çrş", "Prş", "Cuma", "Ctesi"];
         return weekdays[date.getDay()];
@@ -788,6 +883,30 @@
           now.toLocaleString("en-US", { timeZone: "Europe/Istanbul" })
         );
         return turkeyTime;
+      }
+
+      function getTimeDifference(lastUpdateDate) {
+        const now = getTurkeyTime();
+        const diffInMinutes = Math.floor((now - lastUpdateDate) / (1000 * 60));
+        
+        if (diffInMinutes < 60) {
+          return {
+            text: `${diffInMinutes} dakika önce`,
+            freshness: 'fresh'
+          };
+        } else if (diffInMinutes < 1440) {
+          const hours = Math.floor(diffInMinutes / 60);
+          return {
+            text: `${hours} saat önce`,
+            freshness: diffInMinutes < 360 ? 'fresh' : 'old'
+          };
+        } else {
+          const days = Math.floor(diffInMinutes / 1440);
+          return {
+            text: `${days} gün önce`,
+            freshness: 'very-old'
+          };
+        }
       }
 
       const SHEET_URL =
@@ -932,10 +1051,63 @@
         errorContainer.style.display = "none";
       }
 
+      function parseSheetDate(dateString) {
+        if (!dateString || dateString.trim() === '') return null;
+        
+        try {
+          const date = new Date(dateString);
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+          
+          const turkishFormat = dateString.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})/);
+          if (turkishFormat) {
+            const [_, day, month, year, hour, minute] = turkishFormat;
+            return new Date(year, month - 1, day, hour, minute);
+          }
+          
+          return null;
+        } catch (error) {
+          console.error("Tarih parse hatası:", error);
+          return null;
+        }
+      }
+
       function updateUI(data) {
         if (!data || data.length < 2) {
           showErrorMessage("Veri Hatası", "Geçersiz veri formatı. Lütfen bigfiggings ile iletişime geçin.");
           return;
+        }
+
+        const lastUpdateRow = data.find((row) => row[0] === "Son Güncelleme");
+        let lastUpdateDate = null;
+        let lastUpdateText = "Bilgi yok";
+        
+        if (lastUpdateRow && lastUpdateRow[1]) {
+          lastUpdateDate = parseSheetDate(lastUpdateRow[1]);
+          if (lastUpdateDate) {
+            const timeDiff = getTimeDifference(lastUpdateDate);
+            lastUpdateText = formatTurkishDateTime(lastUpdateDate) + ` (${timeDiff.text})`;
+            
+            const freshnessIndicator = document.getElementById("freshnessIndicator");
+            freshnessIndicator.className = `freshness-indicator ${timeDiff.freshness}`;
+            
+            switch(timeDiff.freshness) {
+              case 'fresh':
+                freshnessIndicator.textContent = 'GÜNCEL';
+                break;
+              case 'old':
+                freshnessIndicator.textContent = 'ESKİ';
+                break;
+              case 'very-old':
+                freshnessIndicator.textContent = 'ÇOK ESKİ';
+                break;
+            }
+          } else {
+            document.getElementById("freshnessIndicator").style.display = 'none';
+          }
+        } else {
+          document.getElementById("freshnessIndicator").style.display = 'none';
         }
 
         const todayStatus = data.find((row) => row[0] === "Bugün Durumu");
@@ -999,19 +1171,13 @@
 
         updateWeeklySchedule(data, timeZones);
 
+        document.getElementById("lastUpdatedByUser").textContent = 
+          `bigfiggings tarafından güncellendi: ${lastUpdateText}`;
+        
         const now = getTurkeyTime();
-        const options = {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        };
-        const formattedDate = new Intl.DateTimeFormat("tr-TR", options).format(
-          now
-        );
-        document.getElementById("lastUpdateInfo").textContent =
-          "Son güncelleme: " + formattedDate;
+        const formattedDate = formatTurkishDateTime(now);
+        document.getElementById("lastDataFetch").textContent =
+          "Veriler çekildi: " + formattedDate;
       }
 
       function updateTimeInfo(timeZones) {
