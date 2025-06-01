@@ -879,10 +879,9 @@
 
       function getTurkeyTime() {
         const now = new Date();
-        const turkeyTime = new Date(
-          now.toLocaleString("en-US", { timeZone: "Europe/Istanbul" })
-        );
-        return turkeyTime;
+        const options = { timeZone: "Europe/Istanbul" };
+        const turkeyTimeString = now.toLocaleString("sv-SE", options);
+        return new Date(turkeyTimeString);
       }
 
       function getTimeDifference(lastUpdateDate) {
@@ -1055,15 +1054,19 @@
         if (!dateString || dateString.trim() === '') return null;
         
         try {
-          const date = new Date(dateString);
-          if (!isNaN(date.getTime())) {
-            return date;
-          }
+          console.log("Parse edilecek tarih:", dateString);
           
           const turkishFormat = dateString.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})/);
           if (turkishFormat) {
             const [_, day, month, year, hour, minute] = turkishFormat;
-            return new Date(year, month - 1, day, hour, minute);
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+            console.log("Parse edilen tarih:", date);
+            return date;
+          }
+          
+          const date = new Date(dateString);
+          if (!isNaN(date.getTime())) {
+            return date;
           }
           
           return null;
@@ -1072,7 +1075,6 @@
           return null;
         }
       }
-
       function updateUI(data) {
         if (!data || data.length < 2) {
           showErrorMessage("Veri Hatası", "Geçersiz veri formatı. Lütfen bigfiggings ile iletişime geçin.");
